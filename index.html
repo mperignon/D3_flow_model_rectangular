@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<title>Self Organizing Maps</title>
+		
+		<script type="text/javascript" src="http://d3js.org/d3.v3.js"></script>
+		<script type="text/javascript" src="http://d3js.org/d3.hexbin.v0.min.js"></script>	
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.3/jquery.js"></script>
+
+ 
+     <style type="text/css">
+/* 
+        circle {
+            stroke: #EFEDF5;
+            fill: #EFEDF5;
+            pointer-events: none;
+        }
+        line {
+            pointer-events: none;
+            stroke: #EFEDF5;
+            stroke-width: 1px;
+            opacity: 1;
+        }
+ */
+        path{
+            stroke: #EFEDF5;
+            stroke-width: 1px;
+        }
+
+    </style>
+  
+
+	</head>
+	<body>
+	
+	Input parameters:<br>
+	Upstream flow depth (0.5 to 1.5 meters): <input type="text" name="maxH" id="maxH" value="1"/><br>
+	Run duration (below 200 seconds): <input type="text" name="maxT" id="maxT" value="10" />
+	<input type="button" autofocus id = "submit" name='submit' value='Set values' onclick="retrieve();"/>
+	<input type="button" id = "startrun" name='start' value = 'Start run' disabled onclick="run_sim();"/><br><br>
+	
+	Create vegetation:<br>
+	<input type="button" id = "plant" value = 'Click to plant vegetation' onclick="vegetate();"/>
+	<input type="button" id = "noplant" value = 'Reset vegetation' disabled onclick="resetVeg();"/><br><br>
+	
+	Animation controls:<br>
+	<input type="button" id = "playvideo" name='play' value = 'Play' disabled onclick="play();"/>
+	<input type="button" id = "stopvideo" name='stop' value = 'Pause' disabled onclick="pause();"/><br>
+	<input type="button" id = "slower" value = 'Slower' disabled onclick="slower();"/>
+	<input type="button" id = "faster" value = 'Faster' disabled onclick="faster();"/>
+
+<br><br>
+
+		<div id="chart"></div>
+		<div id="chart2"></div>
+		
+		<script type="text/javascript" src="scripts.js"></script>
+	</body>
+</html>
