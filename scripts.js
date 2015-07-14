@@ -1,15 +1,21 @@
-var verbose = false;
-var dt = .2;
+$.getScript('grid.js', function(){});
+$.getScript('update.js', function(){});
+$.getScript('video_controls.js', function(){});
+$.getScript('veg.js', function(){});
+
+var verbose = true;
+var dt = 2;
 var vid_dt = 1; // video speed
 var max_t;
 var dx = 15;
-var maxH;
+var dy = dx;
+var maxH = 1;
 var MapColumns = 40,
 	MapRows = 25;
 	
 var D = 0.0005;
 var tau_c = 0.047;
-var S = 0.001;
+var S = 0.0001;
 
 var Cd = 1.2;
 var n = 0.03;
@@ -33,52 +39,105 @@ var blues = d3.scale.linear().domain([0,0.1])
 .range(["#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#08519c"]);
 
 
-var margin = {
-    top: 10,
-    right: 10,
-    bottom: 10,
-    left: 10
-};
+var shots = [];
+var topo = [];
+var pts = [];
+var colors = [];
+var stage;
+var time = [];
+var node_links;
+var link_geometry;
+var link_sed;
+var t = 0;
+var tv = 0;
+var sl = 0;
+var sed = [];
 
-var cell_area = 5/6 * dx*dx;
+var depth_t = [];
+var depth = [];
+var volume = [];
 
-var w = window.innerWidth > MapColumns*dx ? MapColumns*dx : (window.innerWidth || MapColumns*dx),
-	h = window.innerHeight > MapRows*dx ? MapRows*dx : (window.innerHeight || MapRows*dx);
 
-var d3_geom_voronoi = d3.geom.voronoi()
-		.x(function(d) { return d.x; })
-		.y(function(d) { return d.y; })
-		.clipExtent([[0, 0], [w, h]]);
+function retrieve() {
 
-// upper
-var svg = d3.select("#chart").append("svg")
-    .attr("width", w)
-    .attr("height", h)
-    .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-var circles = svg.selectAll("circle");
-var path = svg.selectAll("path");
+	if (verbose) { console.log('retrieve'); }
 
-// initialize
-// 
-// var k_ = 0;
-// for (var i = 0; i < MapRows+1; i++) {
-// 	for (var j = 0; j < MapColumns; j++) {	
-// 	
-//     	var x_ = j * dx + dx/2*(i%2);
-//     	var y_ = i * dx;
-//     	var z_ = (w - x_) * S + (y_ - MapRows/2 * dx)*(y_ - MapRows/2 * dx) / 20000 - w*S;
-//     	
-//     	pts.push({k: k_,
-//     			  x: x_,
-//     			  y: y_,
-//     			  z: z_,
-//     			  depth: 0,
-//     			  volume: 0,
-//     			  time: 0,
-//     			  veg: 0,
-//     			  Qs: 0,
-//     			  C: 0});
-//     	k_++;	
-//     }
-// }
+    var txtbox = document.getElementById("maxH");
+    maxH = Number(txtbox.value);
+    
+    var txtbox = document.getElementById("maxT");
+    max_t = txtbox.value;
+    
+    
+    set_initial();
+    geometry_fvm();
+    draw_initial();
+    
+    
+    
+    document.getElementById("startrun").disabled = false;
+    
+}
+
+
+
+var draw_initial = function() {
+
+	if (verbose) { console.log('draw_initial'); }
+
+	recolor();
+
+	path.transition().style("fill", function(d, i) { return colors[i]; });   
+// 	path_l.transition().style("fill", function(d, i) { return sedColors(sed[i]); });   
+
+}
+
+
+var recolor = function() {
+
+	if (verbose) { console.log('recolor'); }
+
+	colors = [];
+	sed = [];
+
+	for (var i=0; i<pts.length; i++){
+	
+		if (pts[i].depth > 0.01 & pts[i].veg == 0) {
+			colors.push(blues(pts[i].depth));
+			
+		} else if (pts[i].depth <= 0.01 & pts[i].veg == 0) {
+			colors.push(browns(pts[i].z));
+			
+		} else {
+			colors.push(greens(pts[i].veg));
+			
+		}
+// 	sed.push(pts[i].C);
+	}	
+
+}
+
+
+
+
+var run_sim = function() {
+
+	if (verbose) { console.log('run_sim'); }
+
+	shots.push(colors);
+// 	topo.push(sed);
+	// this is a shallow clone and won't work! need to either loop through the interior arrays or to create 1 level arrays (like colors) that can be copied every time
+	
+	while (t < max_t) {
+		update_fvm();
+		shots.push(colors);
+// 		topo.push(sed);
+// 		console.log(pts)
+	}
+	
+	console.log('Run finished')
+	
+	document.getElementById("playvideo").disabled = false;
+}
+
+

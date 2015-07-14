@@ -4,7 +4,7 @@ function Decrement() {
 	
 	// upper
 	path.transition()
-	   .duration(100)
+	   .duration(1)
 	   .style("fill", function(d, j) { return shots.slice(sl,sl+1)[0][j] });
 	   
 // 	path_l.transition()
