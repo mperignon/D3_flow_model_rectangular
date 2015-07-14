@@ -1,95 +1,3 @@
-// gridding
-
-// var update = function() {
-// 
-// 	if (verbose) {
-// 		console.log('update')
-// 	}
-// 
-// 	var src, trg, dir, Q, Qs;
-// 
-// 	for (var i=0; i<node_links.length; i++) {
-// 
-// 		src = node_links[i].source.k;
-// 		trg = node_links[i].target.k;
-// 
-// 		Q = link_geometry[i].discharge;
-// 
-// 		if (Q  > 0) {
-// 			if (Q*dt < pts[src].volume) {
-// 				pts[src].volume = pts[src].volume - Q*dt;
-// 				pts[trg].volume = pts[trg].volume + Q*dt;
-// 				
-// 			} else {
-// 				pts[src].volume = 0;
-// 				pts[trg].volume = pts[trg].volume + pts[src].volume;
-// 			}
-// 		}
-// 		
-// 		if (Q < 0) {
-// 			if (Math.abs(Q*dt) < pts[trg].volume) {
-// 				pts[src].volume = pts[src].volume + Math.abs(Q*dt);
-// 				pts[trg].volume = pts[trg].volume - Math.abs(Q*dt);
-// 			} else {
-// 				pts[src].volume = pts[src].volume + pts[trg].volume;
-// 				pts[trg].volume = 0;
-// 			}
-// 		}
-// 
-// 	}
-// 	
-// 	edges();
-// 
-// 	for (var i=0; i<pts.length; i++) {
-// 
-// 		pts[i].depth = pts[i].volume / cell_area;
-// 
-// 		if (pts[i].x < 50) {
-// 			pts[i].depth = d3.max([pts[i].z, maxH]) - pts[i].z;
-// 		}
-// 		
-// 		pts[i].volume = pts[i].depth * cell_area;
-// 		
-// // 		}
-// 	}
-// 
-// 	recolor();
-// 	geometry();
-// 	t = t + dt;
-// 
-// }
-// 
-// 
-// var edges = function() {
-// // edges are within one dx of the boundaries
-// 
-// 	// outflow boundaries
-// 	for (var i=0; i<edge_right.length; i++) {
-// 		var k = edge_right[i];
-// 		pts[k].volume = pts[k-1].volume;
-// 	}
-// 	
-// 	for (var i=0; i<edge_top.length; i++) {
-// 		var k = edge_top[i];
-// 		pts[k].volume = pts[k+MapColumns].volume;
-// 	}
-// 	
-// 	for (var i=0; i<edge_bottom.length; i++) {
-// 		var k = edge_bottom[i];
-// 		pts[k].volume = pts[k-MapColumns-1].volume;
-// 		
-// 	}
-// 	
-// 	// fixed stage
-// 	for (var i=0; i<edge_left.length; i++) {
-// 		var k = edge_left[i];
-// 		stage = d3.max([pts[k].z, maxH]);
-// 		pts[k].volume = stage * cell_area;
-// 	}
-// 
-// 
-// }
-
 
 var update_fvm = function() {
 
@@ -102,7 +10,7 @@ var update_fvm = function() {
 
 	for (var i=0; i<pts.length; i++) {
 	
-		if (pts[i].veg>0) {
+		if (pts[i].veg>0.1) {
 		
 			var u_ = pts[i].hu / pts[i].depth;
 			var v_ = pts[i].hv / pts[i].depth;
@@ -119,6 +27,7 @@ var update_fvm = function() {
 		pts[i].depth = pts[i].depth + pts[i].dh;
 		pts[i].hu = d3.max([pts[i].hu + pts[i].duh,0]);
 		pts[i].hv = d3.max([pts[i].hv + pts[i].dvh,0]);
+		pts[i].hv
 		
 		if (pts[i].depth <= 0) {
 			pts[i].depth = 0.0001;
@@ -150,7 +59,7 @@ var update_fvm = function() {
 	for (var i=0; i<edge_left.length; i++) {
 		var i_ = edge_left[i];
 		var stage = d3.max([pts[i_].z+0.0001, maxH]);
-		pts[i_].depth = d3.max([stage - pts[i_].z, pts[i_+1].depth]);
+		pts[i_].depth = stage - pts[i_].z;
 		pts[i_].hu = pts[i_+1].hu;
 		pts[i_].hv = pts[i_+1].hv;
 	}
@@ -161,14 +70,87 @@ var update_fvm = function() {
 
 
 
+var elev;
+
+var update_sed = function () {
+
+elev = [];
+var Edot = [];
+var Ddot = [];
+var tau_s, edot, ddot;
+var tau_b, diff;
+
+
+	for (var i=0; i<edge_top.length; i++) {
+		var i_ = edge_top[i];
+		pts[i_].dChx = pts[i_+MapColumns].dChx;
+		pts[i_].dChy = pts[i_+MapColumns].dChy;
+	}
+		for (var i=0; i<edge_bottom.length; i++) {
+		var i_ = edge_bottom[i];
+		pts[i_].dChx = pts[i_-MapColumns].dChx;
+		pts[i_].dChy = pts[i_-MapColumns].dChy;
+	}
+		for (var i=0; i<edge_right.length; i++) {
+		var i_ = edge_right[i];
+		pts[i_].dChx = pts[i_-1].dChx;
+		pts[i_].dChy = pts[i_-1].dChy;
+		
+	}
+	for (var i=0; i<edge_left.length; i++) {
+		var i_ = edge_left[i];
+		pts[i_].dChx = Co*pts[i_].depth;
+		pts[i_].dChy = Co*pts[i_].depth;
+	}
 
 
 
 
+for (var i=0; i<pts.length; i++) {
 
+	// do dCh/dt here, set new C
+	// then do dz/dt here
 
+	// erosion and deposition
+	var h = pts[i].depth;
+	
+	if (h>minh) {
+	
+	var C = pts[i].Ch / h;
 
+	tau_b = rho * g * h * S;
+	tau_s = tau_b / ((rho_s - rho) * g * D);
+	
+	edot = d3.max([Ke * (tau_s - tau_c),0]);
+	ddot = C*vs;
+	
+	diff = ddot - edot;
+	
+	pts[i].Ch = d3.max([pts[i].Ch + pts[i].dChx + pts[i].dChy - diff*dt,0]);
+	
+	// dz/dt
+	var dz = diff*dt/(1-porosity);
+	
+	pts[i].z = pts[i].z + dz;
+	pts[i].depth = pts[i].depth + dz;
+	
+	if (pts[i].depth <= 0) {pts[i].Ch = 0;}
+		
+	}
+	
+	
+	for (var i=0; i<edge_left.length; i++) {
+		var i_ = edge_left[i];
+		pts[i_].z = initial_z[i_];
+		var stage = d3.max([pts[i_].z+0.0001, maxH]);
+		pts[i_].depth = stage - pts[i_].z;
+	}
+	
+	elev.push(browns(pts[i].z));
 
+}
+	
+}
 
 
 

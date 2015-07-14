@@ -26,14 +26,11 @@ var vegetate = function() {
 
 		 
 	.on("mousedown", function(d,i) {
-
+	
 		for (var j = 0; j<nearby.length; j++){
 			pts[nearby[j]].veg++;
 			colors[nearby[j]] = greens(pts[nearby[j]].veg)
-			
-			console.log(pts[nearby[j]])
 		}
-		console.log('------------')
 		path.style("fill", function(d, i) { return colors[i] });
 	})
 
@@ -49,6 +46,7 @@ var vegetate = function() {
 	
 	d3_geom_voronoi.links(pts).forEach(function (d) {
 		linkedByIndex[d.source.k + "," + d.target.k] = 1;
+		
 	});
 
 

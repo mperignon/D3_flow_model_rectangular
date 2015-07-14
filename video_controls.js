@@ -1,14 +1,13 @@
 function Decrement() {
 
 	strTime = '  Time = ';
-	strTime = strTime.concat((sl*dt).toFixed(2).toString());
+	strTime = strTime.concat((5*sl*dt).toFixed(2).toString());
 	strTime = strTime.concat(' seconds');
 	document.getElementById("counter").innerHTML = strTime;
-	console.log('time = ', (sl*dt).toFixed(2))
 	
 	// upper
 	path.transition()
-	   .duration(1)
+	.duration(100)
 	   .style("fill", function(d, j) { return shots.slice(sl,sl+1)[0][j] });
 	   
 // 	path_l.transition()

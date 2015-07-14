@@ -1,8 +1,8 @@
 var margin = {
-    top: 0,
-    right: 10,
-    bottom: 10,
-    left: 10
+    top: dx,
+    right: dx,
+    bottom: dx,
+    left: dx
 };
 
 var cell_area = 5/6 * dx*dx;
@@ -17,6 +17,7 @@ var edge_right = [];
 var edge_bottom = [];
 var edge_left = [];
 var interior = [];
+var initial_z = [];
 
 var k_ = 0;
 for (var i = 0; i < MapRows+1; i++) {
@@ -51,7 +52,11 @@ for (var i = 0; i < MapRows+1; i++) {
     			  dh: 0,
     			  duh: 0,
     			  dvh: 0,
-    			  rocks: 0});
+    			  Ch: 0,
+    			  dChx: 0,
+    			  dChy: 0});
+    			  
+    	initial_z.push(z_);
     	
     	
 		k_++;	
@@ -71,10 +76,10 @@ var d3_geom_voronoi = d3.geom.voronoi()
 
 // upper
 var svg = d3.select("#chart").append("svg")
-    .attr("width", w)
-    .attr("height", h)
+    .attr("width", w - 2*dx)
+    .attr("height", h - 2*dx)
     .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+     .attr("transform", "translate(" + dx + "," + dx + ")");
 var circles = svg.selectAll("circle");
 var path = svg.selectAll("path");
 
@@ -106,70 +111,7 @@ var set_initial = function() {
 		
 	}
 }
-// 
-// var geometry = function() {
-// 
-// 	if (verbose) {
-// 		console.log('geometry')
-// 	}
-// 	
-// 	var mannings = function(depth,slope) {
-// 		if (depth>0) {
-// 			velocity = (1/n) * Math.pow(depth, 2/3) * Math.pow(Math.abs(slope),1/2);
-// 		} else { velocity = 0; }
-// 		return velocity	
-// 	}
-// 	
-// 	var stage_src, stage_trg;
-// 	var dist, slp, wslp, w_, md, v_, Q;
-// 	var v_veg, v_source, v_target;
-// 	var taub, taub_s, qs_s, qs, Qs, C;
-// 
-// 	node_links = d3_geom_voronoi.links(pts);
-// 	link_geometry = [];
-// // 	link_sed = [];
-// 
-// 	for (var i=0; i<node_links.length; i++) {
-// 	
-// 		d = node_links[i];
-// 	
-// 		dist = Math.sqrt(Math.pow(d.source.x - d.target.x,2) + Math.pow(d.source.y - d.target.y,2));
-// 		slp = (d.source.z - d.target.z) / dist;
-// 	
-// 		stage_src = d.source.z + d.source.depth;
-// 		stage_trg = d.target.z + d.target.depth;
-// 		wslp = (stage_src - stage_trg) / dist;
-// 	
-// 		if (d.source.y == d.target.y) { w_ = dx; } else { w_ = Math.sqrt(dx*dx / 2); }
-// 	
-// 	
-// 		md = (d.source.depth + d.target.depth) / 2;
-// 		if (md<0) { md = 0;};
-// 		
-// 		v_ = mannings(md, wslp);
-// 	
-// 		v_source = 0.5 * Cd * alpha[d.source.veg] * v_*v_ * 0.5*dt;
-// 		v_target = 0.5 * Cd * alpha[d.target.veg] * v_*v_ * 0.5*dt;
-// 		
-// 		console.log(v_)
-// 	
-// 		v_veg = v_ - v_source - v_target;
-// 	
-// 		if (v_veg < 0) { v_veg = 0;}
-// 		if (v_veg > v_) { console.log('alert!', v_veg, v_);}
-// 	
-// 		Q = md * w_ * v_veg * Math.sign(wslp);
-// 
-// 		link_geometry.push({distance: dist,
-// 	// 						bed_slope: slp,
-// 							water_slope: wslp,
-// 							width: w_,
-// 							mid_depth: md,
-// 							velocity: v_veg,
-// 							discharge: Q,
-// 							time: dist/v_veg});
-// 
-// }};
+
 
 var geometry_fvm = function() {
 
@@ -177,7 +119,7 @@ var geometry_fvm = function() {
 		console.log('geometry_fvm')
 	}
 
-var i, j, k, ui, vi, hi, uj, vj, hj, uk, vk, hk, ghh;
+var i, j, k, ui, vi, hi, uj, vj, hj, uk, vk, hk, ghh, Ci, Cj, Ck;
 
 var lffu1 = [];
 var lffu2 = [];
@@ -202,7 +144,7 @@ for (var i=0; i<pts.length; i++) {
 	
 }
 
-var lambdau, lambdav, fluxxh, fluxxu, fluxxv, fluxyh, fluxyu, fluxyv;
+var lambdau, lambdav, fluxxh, fluxxu, fluxxv, fluxyh, fluxyu, fluxyv, fluxxCx, fluxxCy, fluxyCx, fluxyCy;
 
 for (var i_=0; i_<interior.length; i_++) {
 
@@ -217,20 +159,24 @@ for (var i_=0; i_<interior.length; i_++) {
 	if (hi<=0) {
 		hi = 0;
 		ui = 0;
-		vi = 0;	
+		vi = 0;
+		Ci = 0;	
 	} else {
 		ui = pts[i].hu / pts[i].depth;
 		vi = pts[i].hv / pts[i].depth;
+		Ci = pts[i].Ch / pts[i].depth;
 	}	
 	
 	hj = pts[j].depth;	
 	if (hj<=0) {
 		hj = 0;
 		uj = 0;
-		vj = 0;	
+		vj = 0;
+		Cj = 0;
 	} else {
 		uj = pts[j].hu / pts[j].depth;
 		vj = pts[j].hv / pts[j].depth;
+		Cj = pts[j].Ch / pts[j].depth;
 	}	
 	
 	hk = pts[k].depth;	
@@ -238,9 +184,11 @@ for (var i_=0; i_<interior.length; i_++) {
 		hk = 0;
 		uk = 0;
 		vk = 0;	
+		Ck = 0;
 	} else {
 		uk = pts[k].hu / pts[k].depth;
 		vk = pts[k].hv / pts[k].depth;
+		Ck = pts[k].Ch / pts[k].depth;
 	}	
 							
 	lambdau = 0.5 * Math.abs(ui + uj) + Math.sqrt(0.5 * g * (hi + hj));
@@ -253,15 +201,23 @@ for (var i_=0; i_<interior.length; i_++) {
 	fluxxu = 0.5 * (lffu2[i] + lffu2[j]) - 0.5 * lambdau * (uj*hj - ui*hi);
 	fluxxv = 0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vj*hj - vi*hi);
 	
+	fluxxCx = fluxxu * 0.5 * (Ci + Cj);
+	fluxxCy = fluxxv * 0.5 * (Ci + Cj);
+	
 	// down
 	fluxyh = 0.5 * (lffv1[i] + lffv1[k]) - 0.5 * lambdav * (hk - hi);
 	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (uk*hk - ui*hi);
 	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vk*hk - vi*hi);
 	
+	fluxyCx = fluxyu * 0.5 * (Ci + Ck);
+	fluxyCy = fluxyv * 0.5 * (Ci + Ck);
+	
 	
 	var dh = - (dt/dx) * fluxxh - (dt/dy) * fluxyh;
 	var duh = - (dt/dx) * fluxxu - (dt/dy) * fluxyu;
 	var dvh = - (dt/dx) * fluxxv - (dt/dy) * fluxyv;
+	var dChx = - (dt/dx) * fluxxCx - (dt/dy) * fluxyCx;
+	var dChy = - (dt/dx) * fluxxCy - (dt/dy) * fluxyCy;
 	
 	//////////////////////// TO THE LEFT AND UP //////////////////////
 	j = i-1;
@@ -271,10 +227,12 @@ for (var i_=0; i_<interior.length; i_++) {
 	if (hj<=0) {
 		hj = 0;
 		uj = 0;
-		vj = 0;	
+		vj = 0;
+		Cj = 0;
 	} else {
 		uj = pts[j].hu / pts[j].depth;
 		vj = pts[j].hv / pts[j].depth;
+		Cj = pts[j].Ch / pts[j].depth;
 	}	
 	
 	hk = pts[k].depth;	
@@ -282,10 +240,12 @@ for (var i_=0; i_<interior.length; i_++) {
 		hk = 0;
 		uk = 0;
 		vk = 0;	
+		Ck = 0;
 	} else {
 		uk = pts[k].hu / pts[k].depth;
 		vk = pts[k].hv / pts[k].depth;
-	}		
+		Ck = pts[k].Ch / pts[k].depth;
+	}			
 							
 	lambdau = 0.5 * Math.abs(ui + uj) + Math.sqrt(0.5 * g * (hi + hj));
 	lambdav = 0.5 * Math.abs(vi + vk) + Math.sqrt(0.5 * g * (hi + hk));
@@ -298,17 +258,24 @@ for (var i_=0; i_<interior.length; i_++) {
 	fluxxu = 0.5 * (lffu2[i] + lffu2[j]) - 0.5 * lambdau * (ui*hi - uj*hj);
 	fluxxv = 0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vi*hi - vj*hj);
 	
+	fluxxCx = fluxxu * 0.5 * (Ci + Cj);
+	fluxxCy = fluxxv * 0.5 * (Ci + Cj);
+	
 	// up
 	fluxyh = 0.5 * (lffv1[i] + lffv1[k]) - 0.5 * lambdav * (hi - hk);
 	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (ui*hi - uk*hk);
 	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vi*hi - vk*hk);
+	
+	fluxyCx = fluxyu * 0.5 * (Ci + Ck);
+	fluxyCy = fluxyv * 0.5 * (Ci + Ck);
 	
 	
 	pts[i].dh = dh + (dt/dx) * fluxxh + (dt/dy) * fluxyh;
 	pts[i].duh = duh + (dt/dx) * fluxxu + (dt/dy) * fluxyu;
 	pts[i].dvh = dvh + (dt/dx) * fluxxv + (dt/dy) * fluxyv;
 	
-	
+	pts[i].dChx = dChx + (dt/dx) * fluxxCx + (dt/dy) * fluxyCx;
+	pts[i].dChy = dChy + (dt/dx) * fluxxCy + (dt/dy) * fluxyCy;
 
 	
 }// 

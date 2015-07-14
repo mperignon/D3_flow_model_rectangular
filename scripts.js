@@ -4,26 +4,33 @@ $.getScript('video_controls.js', function(){});
 $.getScript('veg.js', function(){});
 //$.getScript('rocks.js', function(){});
 
-var verbose = true;
-var dt = 2;
-var vid_dt = 200; // video speed
+var verbose = false;
+var dt = 1;
+var vid_dt = 0; // video speed (inverse)
 var max_t;
 var dx = 15;
 var dy = dx;
 var maxH = 1;
 var MapColumns = 40,
 	MapRows = 25;
-	
-var D = 0.0005;
-var tau_c = 0.047;
-var S = 0.0001;
+
+var S = 0.001;
+var g = 9.81;
+var Co = 0.1; // concentration of incoming flow, in decimal
 
 var Cd = 1.2;
-var n = 0.03;
+var porosity = 0.3;
+
 var rho = 1000;
 var rho_s = 2650;
-var g = 9.81;
-
+var D = 0.0005;
+var tau_c = 0.047;
+var u_s = Math.sqrt(0.05/8);
+var R = (rho_s - rho) / rho;
+var Ke = 12 * D * Math.sqrt(R * g * D);
+var nu = 0.000001;
+var vs = (R * g * D*D) / (18*nu - Math.pow((0.75*0.4 * g * R * D*D*D),2));
+var minh = tau_c * R * D / S;
 
 // Color schemes
 var greens = d3.scale.quantize().domain([1,3])
@@ -44,19 +51,14 @@ var shots = [];
 var topo = [];
 var pts = [];
 var colors = [];
-var stage;
 var time = [];
 var node_links;
+var sed_links;
 var link_geometry;
 var link_sed;
 var t = 0;
 var tv = 0;
 var sl = 0;
-var sed = [];
-
-var depth_t = [];
-var depth = [];
-var volume = [];
 
 
 function retrieve() {
@@ -143,9 +145,10 @@ var run_sim = function() {
 	
 	while (t < max_t) {
 		update_fvm();
-		shots.push(colors);
-// 		topo.push(sed);
-// 		console.log(pts)
+		update_sed();
+		if (t%5 ==0) {
+// 			shots.push(colors);
+			shots.push(elev);}
 
 
 	}
