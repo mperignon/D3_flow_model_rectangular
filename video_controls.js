@@ -1,5 +1,9 @@
 function Decrement() {
 
+	strTime = '  Time = ';
+	strTime = strTime.concat((sl*dt).toFixed(2).toString());
+	strTime = strTime.concat(' seconds');
+	document.getElementById("counter").innerHTML = strTime;
 	console.log('time = ', (sl*dt).toFixed(2))
 	
 	// upper
@@ -25,6 +29,7 @@ function play() {
     document.getElementById("stopvideo").disabled = false;
     document.getElementById("slower").disabled = false;
     document.getElementById("faster").disabled = false;
+    document.getElementById("plant").disabled = true;
     
 }
 
@@ -40,6 +45,6 @@ function pause() {
 }
 
 
-function slower() { vid_dt = vid_dt + 200; }
-function faster() { vid_dt = vid_dt - 200; }
+function slower() { vid_dt = vid_dt + 20; }
+function faster() { vid_dt = d3.max([vid_dt - 20,0]); }
 

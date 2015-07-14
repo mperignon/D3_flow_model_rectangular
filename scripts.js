@@ -2,10 +2,11 @@ $.getScript('grid.js', function(){});
 $.getScript('update.js', function(){});
 $.getScript('video_controls.js', function(){});
 $.getScript('veg.js', function(){});
+//$.getScript('rocks.js', function(){});
 
 var verbose = true;
 var dt = 2;
-var vid_dt = 1; // video speed
+var vid_dt = 200; // video speed
 var max_t;
 var dx = 15;
 var dy = dx;
@@ -73,9 +74,13 @@ function retrieve() {
     geometry_fvm();
     draw_initial();
     
-    
-    
+    document.getElementById("maxH").disabled = true;
+    document.getElementById("maxT").disabled = true;
+    document.getElementById("submit").disabled = true;
     document.getElementById("startrun").disabled = false;
+    
+    document.getElementById("running").innerHTML = " <- Click to run the model";
+    document.getElementById("values").innerHTML = "";
     
 }
 
@@ -108,6 +113,7 @@ var recolor = function() {
 		} else if (pts[i].depth <= 0.01 & pts[i].veg == 0) {
 			colors.push(browns(pts[i].z));
 			
+
 		} else {
 			colors.push(greens(pts[i].veg));
 			
@@ -123,21 +129,39 @@ var recolor = function() {
 var run_sim = function() {
 
 	if (verbose) { console.log('run_sim'); }
+	
+	for (var i=0; i<pts.length; i++){
+	if (pts[i].veg>3) {pts[i].veg = 3;}
+	}
 
 	shots.push(colors);
 // 	topo.push(sed);
 	// this is a shallow clone and won't work! need to either loop through the interior arrays or to create 1 level arrays (like colors) that can be copied every time
+	
+	document.getElementById("veg").innerHTML = "";
+	document.getElementById("running").innerHTML = " Running...";
 	
 	while (t < max_t) {
 		update_fvm();
 		shots.push(colors);
 // 		topo.push(sed);
 // 		console.log(pts)
+
+
 	}
 	
+	document.getElementById("running").innerHTML = " Done!";
 	console.log('Run finished')
+	document.getElementById("counter").innerHTML = ' <- Click to play the video';
 	
+	document.getElementById("startrun").disabled = true;
 	document.getElementById("playvideo").disabled = false;
+	document.getElementById("noplant").disabled = true;
+	
+	svg.selectAll("path").on("mousedown", function(d,i) {});
+	svg.selectAll("path").on("mouseover", function(d,i) {});
+	svg.selectAll("path").on("mouseout", function(d,i) {});
+	
 }
 
 

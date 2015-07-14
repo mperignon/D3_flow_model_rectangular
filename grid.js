@@ -1,5 +1,5 @@
 var margin = {
-    top: 10,
+    top: 0,
     right: 10,
     bottom: 10,
     left: 10
@@ -50,7 +50,8 @@ for (var i = 0; i < MapRows+1; i++) {
     			  hv: 0,
     			  dh: 0,
     			  duh: 0,
-    			  dvh: 0});
+    			  dvh: 0,
+    			  rocks: 0});
     	
     	
 		k_++;	
@@ -73,7 +74,7 @@ var svg = d3.select("#chart").append("svg")
     .attr("width", w)
     .attr("height", h)
     .append("g")
-//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 var circles = svg.selectAll("circle");
 var path = svg.selectAll("path");
 
@@ -206,6 +207,7 @@ var lambdau, lambdav, fluxxh, fluxxu, fluxxv, fluxyh, fluxyu, fluxyv;
 for (var i_=0; i_<interior.length; i_++) {
 
 	i = interior[i_];
+
 	
 	//////////////////// TO THE RIGHT AND DOWN /////////////////////////////
 	j = i+1;
@@ -256,6 +258,7 @@ for (var i_=0; i_<interior.length; i_++) {
 	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (uk*hk - ui*hi);
 	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vk*hk - vi*hi);
 	
+	
 	var dh = - (dt/dx) * fluxxh - (dt/dy) * fluxyh;
 	var duh = - (dt/dx) * fluxxu - (dt/dy) * fluxyu;
 	var dvh = - (dt/dx) * fluxxv - (dt/dy) * fluxyv;
@@ -300,9 +303,11 @@ for (var i_=0; i_<interior.length; i_++) {
 	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (ui*hi - uk*hk);
 	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vi*hi - vk*hk);
 	
+	
 	pts[i].dh = dh + (dt/dx) * fluxxh + (dt/dy) * fluxyh;
 	pts[i].duh = duh + (dt/dx) * fluxxu + (dt/dy) * fluxyu;
 	pts[i].dvh = dvh + (dt/dx) * fluxxv + (dt/dy) * fluxyv;
+	
 	
 
 	

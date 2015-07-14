@@ -90,6 +90,7 @@
 // 
 // }
 
+
 var update_fvm = function() {
 
 	geometry_fvm();
@@ -101,9 +102,23 @@ var update_fvm = function() {
 
 	for (var i=0; i<pts.length; i++) {
 	
+		if (pts[i].veg>0) {
+		
+			var u_ = pts[i].hu / pts[i].depth;
+			var v_ = pts[i].hv / pts[i].depth;
+		
+			var u_veg = 0.5 * Cd * alpha[pts[i].veg] * u_*u_ * dt;
+			pts[i].duh = pts[i].duh - u_veg*pts[i].depth;
+			
+			var v_veg = 0.5 * Cd * alpha[pts[i].veg] * v_*v_ * dt;
+			pts[i].dvh = pts[i].dvh - v_veg*pts[i].depth;
+		
+		}
+		
+	
 		pts[i].depth = pts[i].depth + pts[i].dh;
-		pts[i].hu = pts[i].hu + pts[i].duh;
-		pts[i].hv = pts[i].hv + pts[i].dvh;
+		pts[i].hu = d3.max([pts[i].hu + pts[i].duh,0]);
+		pts[i].hv = d3.max([pts[i].hv + pts[i].dvh,0]);
 		
 		if (pts[i].depth <= 0) {
 			pts[i].depth = 0.0001;

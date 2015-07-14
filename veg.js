@@ -2,8 +2,9 @@ var vegetate = function() {
 	
 	if (verbose) { console.log('vegetate'); }
 
-	document.getElementById("plant").value = "Stop planting";
-	document.getElementById("plant").onclick = function() {stopVeg();};
+// 	document.getElementById("plant").value = "Stop planting";
+// 	document.getElementById("plant").onclick = function() {stopVeg();};
+	document.getElementById("plant").disabled = true;
 	document.getElementById("noplant").disabled = false;
 
 	var nearby = [];
@@ -57,18 +58,18 @@ var vegetate = function() {
 
 
 
-var stopVeg = function() {
-	
-	if (verbose) { console.log('stopVeg'); }
-	
-	document.getElementById("plant").value = "Click to plant more vegetation";
-	document.getElementById("plant").onclick = function() {vegetate();};
-
-	svg.selectAll("path")
-	.on("click", function(d, i) {if (pts[i].veg>3) { pts[i].veg = 3;}})
-
-}
-
+// var stopVeg = function() {
+// 	
+// 	if (verbose) { console.log('stopVeg'); }
+// 	
+// 	document.getElementById("plant").value = "Click to plant more vegetation";
+// 	document.getElementById("plant").onclick = function() {vegetate();};
+// 
+// 	svg.selectAll("path")
+// 	.on("click", function(d, i) {if (pts[i].veg>3) { pts[i].veg = 3;}})
+// 
+// }
+// 
 
 var resetVeg = function() {
 
@@ -79,6 +80,7 @@ var resetVeg = function() {
 	document.getElementById("plant").value = "Click to plant vegetation";
 	document.getElementById("plant").onclick = function() {vegetate();};
 	document.getElementById("noplant").disabled = true;
+	document.getElementById("plant").disabled = false;
 
 	svg.selectAll("path").on("click", function(d, i) {})
 
