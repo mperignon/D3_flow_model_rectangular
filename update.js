@@ -6,6 +6,9 @@ var update_fvm = function() {
 	if (verbose) {
 		console.log('update_fvm')
 	}
+	
+	
+	
 
 
 	for (var i=0; i<pts.length; i++) {
@@ -27,13 +30,11 @@ var update_fvm = function() {
 		pts[i].depth = pts[i].depth + pts[i].dh;
 		pts[i].hu = d3.max([pts[i].hu + pts[i].duh,0]);
 		pts[i].hv = d3.max([pts[i].hv + pts[i].dvh,0]);
-		pts[i].hv
 		
 		if (pts[i].depth <= 0) {
 			pts[i].depth = 0.0001;
 			pts[i].hu = 0;
-			pts[i].hv = 0;
-		
+			pts[i].hv = 0;		
 		}
 		
 
@@ -56,25 +57,26 @@ var update_fvm = function() {
 		pts[i_].hu = pts[i_].depth*0.5;
 		pts[i_].hv = pts[i_-1].hv;
 	}
+
+		
 	for (var i=0; i<edge_left.length; i++) {
 		var i_ = edge_left[i];
 		var stage = d3.max([pts[i_].z+0.0001, maxH]);
-		pts[i_].depth = stage - pts[i_].z;
-		pts[i_].hu = pts[i_+1].hu;
-		pts[i_].hv = pts[i_+1].hv;
+		pts[i_].depth = d3.max([stage - pts[i_].z, pts[i_+1].depth]);
+		pts[i_].hu = pts[i_+1].hu//pts[i_+1].depth * pts[i_].depth;
+		pts[i_].hv = pts[i_+1].hv//pts[i_+1].depth * pts[i_].depth;
 	}
 	
-	recolor();
+	
 	t = t + dt;
 }
 
 
 
-var elev;
+// var elev;
 
 var update_sed = function () {
 
-elev = [];
 var Edot = [];
 var Ddot = [];
 var tau_s, edot, ddot;
@@ -85,25 +87,48 @@ var tau_b, diff;
 		var i_ = edge_top[i];
 		pts[i_].dChx = pts[i_+MapColumns].dChx;
 		pts[i_].dChy = pts[i_+MapColumns].dChy;
+		if (pts[i_].depth < minh) {
+            pts[i_].Ch = 0;
+            pts[i_].dChy = 0;
+            pts[i_].dChx = 0;
+        }
 	}
 		for (var i=0; i<edge_bottom.length; i++) {
 		var i_ = edge_bottom[i];
 		pts[i_].dChx = pts[i_-MapColumns].dChx;
 		pts[i_].dChy = pts[i_-MapColumns].dChy;
+		if (pts[i_].depth < minh) {
+            pts[i_].Ch = 0;
+            pts[i_].dChy = 0;
+            pts[i_].dChx = 0;
+        }
 	}
 		for (var i=0; i<edge_right.length; i++) {
 		var i_ = edge_right[i];
 		pts[i_].dChx = pts[i_-1].dChx;
 		pts[i_].dChy = pts[i_-1].dChy;
+		if (pts[i_].depth < minh) {
+            pts[i_].Ch = 0;
+            pts[i_].dChy = 0;
+            pts[i_].dChx = 0;
+        }
 		
 	}
 	for (var i=0; i<edge_left.length; i++) {
 		var i_ = edge_left[i];
-		pts[i_].dChx = Co*pts[i_].depth;
-		pts[i_].dChy = Co*pts[i_].depth;
-	}
+		pts[i_].Ch = Co*pts[i_].depth;
+		pts[i_].dChy = 0;
+		pts[i_].dChx = pts[i_].hu*Co;
 
-
+//         pts[i_].dChx = 0.5* (pts[i_].duh + pts[i_+1].duh) *  0.5 * ((pts[i_].Ch/pts[i_].depth) + (pts[i_+1].Ch/pts[i_+1].depth))
+//         
+        if (pts[i_].depth < minh) {
+            pts[i_].Ch = 0;
+            pts[i_].dChy = 0;
+            pts[i_].dChx = 0;
+        }
+        
+    }
 
 
 for (var i=0; i<pts.length; i++) {
@@ -134,22 +159,31 @@ for (var i=0; i<pts.length; i++) {
 	pts[i].z = pts[i].z + dz;
 	pts[i].depth = pts[i].depth + dz;
 	
-	if (pts[i].depth <= 0) {pts[i].Ch = 0;}
-		
-	}
+
+	} else {
 	
+        pts[i].Ch = 0;
+        pts[i].dChy = 0;
+        pts[i].dChx = 0;
+    }
 	
-	for (var i=0; i<edge_left.length; i++) {
-		var i_ = edge_left[i];
-		pts[i_].z = initial_z[i_];
-		var stage = d3.max([pts[i_].z+0.0001, maxH]);
-		pts[i_].depth = stage - pts[i_].z;
-	}
-	
-	elev.push(browns(pts[i].z));
 
 }
+
+	for (var i=0; i<edge_left.length; i++) {
+		var i_ = edge_left[i];
+		pts[i_+1].z = pts[i_+2].z+S*dx;
+		pts[i_].z = pts[i_+1].z+S*dx;
+// 		pts[i_+1].z = initial_z[i_+1];
+// 		pts[i_+1].z = initial_z[i_+1];
+
+	}
 	
+for (var i=0; i<pts.length; i++) {
+elev.push(sedColors(pts[i].z - initial_z[i]));
+}
+
+
 }
 
 

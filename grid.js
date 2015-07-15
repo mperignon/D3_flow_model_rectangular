@@ -65,7 +65,7 @@ for (var i = 0; i < MapRows+1; i++) {
 
 for (var i=0; i<pts.length; i++){
 	colors[i] = browns(pts[i].z);
-// 	sed[i] = sedColors(pts[i].C); 
+// 	elev[i] = sedColors(pts[i].z - initial_z[i]); 
 }
 
 
@@ -76,8 +76,8 @@ var d3_geom_voronoi = d3.geom.voronoi()
 
 // upper
 var svg = d3.select("#chart").append("svg")
-    .attr("width", w - 2*dx)
-    .attr("height", h - 2*dx)
+    .attr("width", w)
+    .attr("height", h)
     .append("g")
      .attr("transform", "translate(" + dx + "," + dx + ")");
 var circles = svg.selectAll("circle");
@@ -99,6 +99,30 @@ circle.enter().append("circle")
 	  .style('opacity',0);
 circle.exit().remove();
 
+var svg2 = d3.select("#chart2").append("svg")
+    .attr("width", w)
+    .attr("height", h)
+    .append("g")
+     .attr("transform", "translate(" + dx + "," + dx + ")");
+var circles2 = svg2.selectAll("circle");
+var path2 = svg2.selectAll("path");
+
+path2 = path2.data(d3_geom_voronoi(pts))
+	.enter().append("path")
+	.attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+	.style("fill", function(d, i) { return sedColors(0) })
+	.attr("id", function(d,i) { return "path2-"+i;});
+
+circle2 = circles2.data(pts)
+circle2.enter().append("circle")
+	  .attr("r", 1.5)
+	  .attr("cx", function(d) { return d.x; })
+	  .attr("cy", function(d) { return d.y; })
+	  .attr("id", function(d,i) { return i;})
+	  .style('opacity',0);
+circle2.exit().remove();
+
+
 var set_initial = function() {
 
 	if (verbose) { console.log('set_initial'); }
@@ -106,10 +130,9 @@ var set_initial = function() {
 	for (var i=0; i<pts.length; i++) {
 	
 		stage = pts[i].z;
- 	
 		pts[i].depth = stage - pts[i].z + 0.0001;
-		
 	}
+	
 }
 
 
@@ -149,6 +172,7 @@ var lambdau, lambdav, fluxxh, fluxxu, fluxxv, fluxyh, fluxyu, fluxyv, fluxxCx, f
 for (var i_=0; i_<interior.length; i_++) {
 
 	i = interior[i_];
+	
 
 	
 	//////////////////// TO THE RIGHT AND DOWN /////////////////////////////
@@ -276,6 +300,13 @@ for (var i_=0; i_<interior.length; i_++) {
 	
 	pts[i].dChx = dChx + (dt/dx) * fluxxCx + (dt/dy) * fluxyCx;
 	pts[i].dChy = dChy + (dt/dx) * fluxxCy + (dt/dy) * fluxyCy;
+	
+	if (pts[i].depth < minh) {
+
+	pts[i].dChx = 0;
+	pts[i].dChy = 0;
+	
+	}
 
 	
 }// 
