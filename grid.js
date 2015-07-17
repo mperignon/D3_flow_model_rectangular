@@ -1,3 +1,5 @@
+// http://bl.ocks.org/ericcitaire/5408146
+
 var margin = {
     top: dx,
     right: dx,
@@ -25,8 +27,8 @@ for (var i = 0; i < MapRows+1; i++) {
 	
 		var flag = 0;
 	
-    	var x_ = j * dx// + dx/2*(i%2);
-    	var y_ = i * dx;
+    	var x_ = j * dx + 0.5*dx;
+    	var y_ = i * dx + 0.5*dx;
     	var z_ = (w - x_) * S + (y_ - MapRows/2 * dx)*(y_ - MapRows/2 * dx) / 20000 - w*S;
 
 
@@ -72,14 +74,14 @@ for (var i=0; i<pts.length; i++){
 var d3_geom_voronoi = d3.geom.voronoi()
 		.x(function(d) { return d.x; })
 		.y(function(d) { return d.y; })
-		.clipExtent([[0, 0], [w, h]]);
+		//.clipExtent([[0, 0], [w, h]]);
 
 // upper
 var svg = d3.select("#chart").append("svg")
     .attr("width", w)
     .attr("height", h)
     .append("g")
-     .attr("transform", "translate(" + dx + "," + dx + ")");
+     //.attr("transform", "translate(" + dx + "," + dx + ")");
 var circles = svg.selectAll("circle");
 var path = svg.selectAll("path");
 
@@ -103,7 +105,7 @@ var svg2 = d3.select("#chart2").append("svg")
     .attr("width", w)
     .attr("height", h)
     .append("g")
-     .attr("transform", "translate(" + dx + "," + dx + ")");
+      //.attr("transform", "translate(" + dx + "," + dx + ")");
 var circles2 = svg2.selectAll("circle");
 var path2 = svg2.selectAll("path");
 

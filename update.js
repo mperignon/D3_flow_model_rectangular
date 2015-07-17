@@ -116,7 +116,7 @@ var tau_b, diff;
 	}
 	for (var i=0; i<edge_left.length; i++) {
 		var i_ = edge_left[i];
-		pts[i_].Ch = Co*pts[i_].depth;
+// 		pts[i_].Ch = Co*pts[i_].depth;
 		pts[i_].dChy = 0;
 		pts[i_].dChx = pts[i_].hu*Co;
 
@@ -170,14 +170,15 @@ for (var i=0; i<pts.length; i++) {
 
 }
 
-	for (var i=0; i<edge_left.length; i++) {
-		var i_ = edge_left[i];
-		pts[i_+1].z = pts[i_+2].z+S*dx;
-		pts[i_].z = pts[i_+1].z+S*dx;
-// 		pts[i_+1].z = initial_z[i_+1];
-// 		pts[i_+1].z = initial_z[i_+1];
-
-	}
+// 	for (var i=0; i<edge_left.length; i++) {
+// 		var i_ = edge_left[i];
+// 		pts[i_+1].z = pts[i_+3].z+S*dx;
+// 		pts[i_+1].z = pts[i_+2].z+S*dx;
+// 		pts[i_].z = pts[i_+1].z+S*dx;
+// // 		pts[i_].z = initial_z[i_];
+// // 		pts[i_+1].z = initial_z[i_+1];
+// 
+// 	}
 	
 for (var i=0; i<pts.length; i++) {
 elev.push(sedColors(pts[i].z - initial_z[i]));
