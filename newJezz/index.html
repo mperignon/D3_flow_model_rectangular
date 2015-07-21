@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>D3 JezzBall</title>
+<style>
+
+body {
+  padding: 0px;
+  margin: 0px;
+}
+
+rect {
+  pointer-events: all;
+}
+
+
+.smallTextStroke {
+  font-family: sans-serif;
+  font-size: 12px;
+  fill: none;
+  stroke: black;
+  stroke-width: 1px;
+}
+.smallText {
+  font-family: sans-serif;
+  font-size: 12px;
+  fill: white;
+}
+
+.bigTextStroke {
+  font-family: sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  fill: none;
+  stroke: black;
+  stroke-width: 4px;
+}
+
+.bigText {
+  font-family: sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  fill: white;
+}
+
+.cell {
+}
+
+.cell.wall {
+  opacity: 0;
+}
+
+.cell.vegEdge {
+  fill: blue;
+}
+
+.cell.vegCenter {
+  fill: red;
+}
+
+
+
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="jezzball.js"></script>
