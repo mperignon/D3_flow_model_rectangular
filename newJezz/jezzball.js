@@ -21,7 +21,7 @@ var alpha = [0, 0.04, 0.4, 1];
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
 
-var cells = d3.range(0, rows * cols).map(function (d) {
+var pts = d3.range(0, rows * cols).map(function (d) {
   var col = d % cols;
   var row = (d - col) / cols;
   
@@ -39,7 +39,7 @@ var cells = d3.range(0, rows * cols).map(function (d) {
   };
 });
 
-var colors = cells.map( function (d) { return browns(d.z) });
+var colors = pts.map( function (d) { return browns(d.z) });
 
 
 
@@ -56,18 +56,18 @@ var taily = function(d) { return d.dy > 0 ? d.sy - r : recty(d) - d.dy * sz; };
 var tailw = function(d) { return d.dx == 0 ? sz : d.sz = (d.x - d.sx) * d.dx; };
 var tailh = function(d) { return d.dy == 0 ? sz : d.sz = (d.y - d.sy) * d.dy; };
 
-var topCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + c.c]; };
-var leftCell = function(c) { return cells[c.r * cols + Math.max(0, c.c - 1)]; };
-var bottomCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + c.c]; };
-var rightCell = function(c) { return cells[c.r * cols + Math.min(cols - 1, c.c + 1)]; };
+var topCell = function(c) { return pts[Math.max(0, c.r - 1) * cols + c.c]; };
+var leftCell = function(c) { return pts[c.r * cols + Math.max(0, c.c - 1)]; };
+var bottomCell = function(c) { return pts[Math.min(rows - 1, c.r + 1) * cols + c.c]; };
+var rightCell = function(c) { return pts[c.r * cols + Math.min(cols - 1, c.c + 1)]; };
 
-var topLeftCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.max(0, c.c - 1)]; };
-var bottomLeftCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + Math.max(0, c.c - 1)]; };
-var bottomRightCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + Math.min(cols - 1, c.c + 1)]; };
-var topRightCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.min(cols - 1, c.c + 1)]; };
+var topLeftCell = function(c) { return pts[Math.max(0, c.r - 1) * cols + Math.max(0, c.c - 1)]; };
+var bottomLeftCell = function(c) { return pts[Math.min(rows - 1, c.r + 1) * cols + Math.max(0, c.c - 1)]; };
+var bottomRightCell = function(c) { return pts[Math.min(rows - 1, c.r + 1) * cols + Math.min(cols - 1, c.c + 1)]; };
+var topRightCell = function(c) { return pts[Math.max(0, c.r - 1) * cols + Math.min(cols - 1, c.c + 1)]; };
 
 var cell = svg.selectAll(".cell")
-  .data(cells)
+  .data(pts)
   .enter().append("rect")
   .attr("class", function(d) { 
   return "cell " + ((d.isWall = d.c == 0 || d.c == cols - 1 || d.r == 0 || d.r == rows - 1) ? "wall" : "field");
@@ -105,6 +105,8 @@ svg.selectAll(".field")
     d3.select(this).classed("vegCenter", true);
     var p = d3.mouse(this);
     previewLocation(c1, p);
+    
+    
   }).on("mouseout", function() {
     d3.selectAll(".vegEdge").classed("vegEdge", false)
     .attr('fill', function(d,i) { colors[i] = browns(d.z); return colors[i]; })
