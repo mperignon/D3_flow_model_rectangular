@@ -7,7 +7,7 @@ var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
 
 var k=0;
-var pts = d3.range(0, rows * cols).map(function (d) {
+var pts = d3.range(0, rows * cols).map(function (d,i) {
   var col = d % cols;
   var row = (d - col) / cols;
   
@@ -21,8 +21,9 @@ var pts = d3.range(0, rows * cols).map(function (d) {
     x: x_,
     y: y_,
     z: z_,
+    k: i,
     veg: 0,
-    depth: 0,
+    depth: 0.001,
 	hu: 0,
 	hv: 0,
 	dh: 0,
@@ -76,3 +77,364 @@ var cell = svg.selectAll(".cell")
   .each(function(d) {
     d.elnt = d3.select(this);
   });
+
+
+var lffu1 = [];
+var lffu2 = [];
+var lffv1 = [];
+var lffv3 = [];
+var huv = [];
+
+
+var geometry = function() {
+
+	if (verbose) {
+		console.log('geometry')
+	}
+
+var i, j, k, ui, vi, hi, uj, vj, hj, uk, vk, hk, ghh, Ci, Cj, Ck;
+
+svg.selectAll(".cell").each( function(d) {
+
+	ui = d.hu / d.depth;
+	vi = d.hv / d.depth;
+	hi = d.depth;
+	
+	huv.push(ui*vi*hi);
+	ghh = 0.5 * hi*hi;
+	
+	lffu1.push(hi*ui);
+	lffu2.push(hi*ui*ui + ghh);
+	
+	lffv1.push(hi*vi);
+	lffv3.push(hi*vi*vi + ghh);
+
+});
+
+
+
+
+var lambdau, lambdav, fluxxh, fluxxu, fluxxv, fluxyh, fluxyu, fluxyv, fluxxCx, fluxxCy, fluxyCx, fluxyCy;
+
+
+
+svg.selectAll(".field").each( function(d) {
+	
+	//////////////////// TO THE RIGHT AND DOWN /////////////////////////////
+
+
+	hi = d.depth;	
+	if (hi<=0.001) {
+		hi = 0.001;
+		ui = 0;
+		vi = 0;
+		Ci = 0;	
+	} else {
+		ui = d.hu / d.depth;
+		vi = d.hv / d.depth;
+		Ci = d.Ch / d.depth;
+	}
+	
+	var right = rightCell(d);
+	
+	hj = right.depth;	
+	if (hj<=0.001) {
+		hj = 0.001;
+		uj = 0;
+		vj = 0;
+		Cj = 0;
+	} else {
+		uj = right.hu / right.depth;
+		vj = right.hv / right.depth;
+		Cj = right.Ch / right.depth;
+	}	
+	
+	var down = bottomCell(d);
+	
+	hk = down.depth;	
+	if (hk<=0.001) {
+		hk = 0.001;
+		uk = 0;
+		vk = 0;	
+		Ck = 0;
+	} else {
+		uk = down.hu / down.depth;
+		vk = down.hv / down.depth;
+		Ck = down.Ch / down.depth;
+	}
+	
+
+	
+	i = d.k;
+	j = right.k;
+	k = down.k;
+							
+	lambdau = 0.5 * Math.abs(ui + uj) + Math.sqrt(0.5 * g * (hi + hj));
+	lambdav = 0.5 * Math.abs(vi + vk) + Math.sqrt(0.5 * g * (hi + hk));
+	
+	// to the right
+	fluxxh = 0.5 * (lffu1[i] + lffu1[j]) - 0.5 * lambdau * (hj - hi);
+	fluxxu = 0.5 * (lffu2[i] + lffu2[j]) - 0.5 * lambdau * (uj*hj - ui*hi);
+	fluxxv = 0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vj*hj - vi*hi);
+	
+	fluxxCx = fluxxu * 0.5 * (Ci + Cj);
+	fluxxCy = fluxxv * 0.5 * (Ci + Cj);
+	
+	// down
+	fluxyh = 0.5 * (lffv1[i] + lffv1[k]) - 0.5 * lambdav * (hk - hi);
+	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (uk*hk - ui*hi);
+	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vk*hk - vi*hi);
+	
+	fluxyCx = fluxyu * 0.5 * (Ci + Ck);
+	fluxyCy = fluxyv * 0.5 * (Ci + Ck);
+	
+	
+	var dh = - (dt/dx) * fluxxh - (dt/dy) * fluxyh;
+	var duh = - (dt/dx) * fluxxu - (dt/dy) * fluxyu;
+	var dvh = - (dt/dx) * fluxxv - (dt/dy) * fluxyv;
+	var dChx = - (dt/dx) * fluxxCx - (dt/dy) * fluxyCx;
+	var dChy = - (dt/dx) * fluxxCy - (dt/dy) * fluxyCy;
+	
+	//////////////////////// TO THE LEFT AND UP //////////////////////
+
+	var left = leftCell(d);
+
+	hj = left.depth;	
+	if (hj<=0.001) {
+		hj = 0.001;
+		uj = 0;
+		vj = 0;
+		Cj = 0;
+	} else {
+		uj = left.hu / left.depth;
+		vj = left.hv / left.depth;
+		Cj = left.Ch / left.depth;
+	}	
+	
+	var up = topCell(d);
+	
+	hk = up.depth;	
+	if (hk<=0.001) {
+		hk = 0.001;
+		uk = 0;
+		vk = 0;	
+		Ck = 0;
+	} else {
+		uk = up.hu / up.depth;
+		vk = up.hv / up.depth;
+		Ck = up.Ch / up.depth;
+	}			
+
+	
+	j = left.k;
+	k = up.k;
+							
+	lambdau = 0.5 * Math.abs(ui + uj) + Math.sqrt(0.5 * g * (hi + hj));
+	lambdav = 0.5 * Math.abs(vi + vk) + Math.sqrt(0.5 * g * (hi + hk));
+	
+// 	console.log(lambdau, lambdav, ui, uj, vi, vk, hi, hj, hk)
+// 	console.log('----')
+	
+	// to the left
+	fluxxh = 0.5 * (lffu1[i] + lffu1[j]) - 0.5 * lambdau * (hi - hj);
+	fluxxu = 0.5 * (lffu2[i] + lffu2[j]) - 0.5 * lambdau * (ui*hi - uj*hj);
+	fluxxv = 0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vi*hi - vj*hj);
+	
+	fluxxCx = fluxxu * 0.5 * (Ci + Cj);
+	fluxxCy = fluxxv * 0.5 * (Ci + Cj);
+	
+	// up
+	fluxyh = 0.5 * (lffv1[i] + lffv1[k]) - 0.5 * lambdav * (hi - hk);
+	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (ui*hi - uk*hk);
+	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vi*hi - vk*hk);
+	
+	fluxyCx = fluxyu * 0.5 * (Ci + Ck);
+	fluxyCy = fluxyv * 0.5 * (Ci + Ck);
+	
+	
+	d.dh = dh + (dt/dx) * fluxxh + (dt/dy) * fluxyh;
+	d.duh = duh + (dt/dx) * fluxxu + (dt/dy) * fluxyu;
+	d.dvh = dvh + (dt/dx) * fluxxv + (dt/dy) * fluxyv;
+	
+	d.dChx = dChx + (dt/dx) * fluxxCx + (dt/dy) * fluxyCx;
+	d.dChy = dChy + (dt/dx) * fluxxCy + (dt/dy) * fluxyCy;
+	
+	if (d.depth < minh) {
+
+	d.dChx = 0;
+	d.dChy = 0;
+	
+	}
+
+})
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+
+
+
+var update = function() {
+
+	geometry();
+
+	if (verbose) {
+		console.log('update')
+	}
+	
+	
+	svg.selectAll(".field").each( function(d) {
+	
+		if (d.veg>0.1 && d.depth>0.001) {
+		
+			var u_ = d.hu / d.depth;
+			var v_ = d.hv / d.depth;
+		
+			var u_veg = 0.5 * Cd * alpha[d.veg] * u_*u_ * dt;
+			d.duh = d.duh - u_veg*d.depth;
+			
+			var v_veg = 0.5 * Cd * alpha[d.veg] * v_*v_ * dt;
+			d.dvh = d.dvh - v_veg*d.depth;
+		
+		}
+		
+	
+		d.depth = d.depth + d.dh;
+		d.hu = d3.max([d.hu + d.duh,0]);
+		d.hv = d3.max([d.hv + d.dvh,0]);
+		
+		if (d.depth <= 0) {
+			d.depth = 0.0001;
+			d.hu = 0;
+			d.hv = 0;		
+		}
+		
+
+	})
+	
+svg.selectAll(".wall").each( function(d) {
+
+	d.depth = 0.001;
+	d.hv = 0;
+	d.hu = 0;
+	
+	if (d.c == 0) {
+		var stage = d3.max([d.z+0.0001, maxH]);
+		d.depth = d3.max([stage - d.z, rightCell(d).depth + 0.1]);
+		d.hu = rightCell(d).hu;
+		d.hv = rightCell(d).hv;
+	}
+
+
+})
+
+
+	t = t + dt;
+}
+// 
+// 
+// 
+// 
+// var update_sed = function () {
+// 
+// var Edot = [];
+// var Ddot = [];
+// var tau_s, edot, ddot;
+// var tau_b, diff;
+// 
+// 
+// 	for (var i=0; i<edge_top.length; i++) {
+// 		var i_ = edge_top[i];
+// 		pts[i_].dChx = pts[i_+MapColumns].dChx;
+// 		pts[i_].dChy = pts[i_+MapColumns].dChy;
+// 		if (pts[i_].depth < minh) {
+//             pts[i_].Ch = 0;
+//             pts[i_].dChy = 0;
+//             pts[i_].dChx = 0;
+//         }
+// 	}
+// 		for (var i=0; i<edge_bottom.length; i++) {
+// 		var i_ = edge_bottom[i];
+// 		pts[i_].dChx = pts[i_-MapColumns].dChx;
+// 		pts[i_].dChy = pts[i_-MapColumns].dChy;
+// 		if (pts[i_].depth < minh) {
+//             pts[i_].Ch = 0;
+//             pts[i_].dChy = 0;
+//             pts[i_].dChx = 0;
+//         }
+// 	}
+// 		for (var i=0; i<edge_right.length; i++) {
+// 		var i_ = edge_right[i];
+// 		pts[i_].dChx = pts[i_-1].dChx;
+// 		pts[i_].dChy = pts[i_-1].dChy;
+// 		if (pts[i_].depth < minh) {
+//             pts[i_].Ch = 0;
+//             pts[i_].dChy = 0;
+//             pts[i_].dChx = 0;
+//         }
+// 		
+// 	}
+// 	for (var i=0; i<edge_left.length; i++) {
+// 		var i_ = edge_left[i];
+// // 		pts[i_].Ch = Co*pts[i_].depth;
+// 		pts[i_].dChy = 0;
+// 		pts[i_].dChx = pts[i_].hu*Co;
+// 
+// //         pts[i_].dChx = 0.5* (pts[i_].duh + pts[i_+1].duh) *  0.5 * ((pts[i_].Ch/pts[i_].depth) + (pts[i_+1].Ch/pts[i_+1].depth))
+// //         
+//         if (pts[i_].depth < minh) {
+//             pts[i_].Ch = 0;
+//             pts[i_].dChy = 0;
+//             pts[i_].dChx = 0;
+//         }
+//         
+//     }
+// 
+// 
+// for (var i=0; i<pts.length; i++) {
+// 
+// 	// do dCh/dt here, set new C
+// 	// then do dz/dt here
+// 
+// 	// erosion and deposition
+// 	var h = pts[i].depth;
+// 	
+// 	if (h>minh) {
+// 	
+// 	var C = pts[i].Ch / h;
+// 
+// 	tau_b = rho * g * h * S;
+// 	tau_s = tau_b / ((rho_s - rho) * g * D);
+// 	
+// 	edot = d3.max([Ke * (tau_s - tau_c),0]);
+// 	ddot = C*vs;
+// 	
+// 	diff = ddot - edot;
+// 	
+// 	pts[i].Ch = d3.max([pts[i].Ch + pts[i].dChx + pts[i].dChy - diff*dt,0]);
+// 	
+// 	// dz/dt
+// 	var dz = diff*dt/(1-porosity);
+// 	
+// 	pts[i].z = pts[i].z + dz;
+// 	pts[i].depth = pts[i].depth + dz;
+// 	
+// 
+// 	} else {
+// 	
+//         pts[i].Ch = 0;
+//         pts[i].dChy = 0;
+//         pts[i].dChx = 0;
+//     }
+// 	
+// 
+// }
+// 
+// 	
+// for (var i=0; i<pts.length; i++) {
+// elev.push(sedColors(pts[i].z - initial_z[i]));
+// }
+// 
+// 
+// }
+
