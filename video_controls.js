@@ -10,6 +10,10 @@ function Decrement() {
 	.duration(100)
 	   .style("fill", function(d, j) { return shots.slice(sl,sl+1)[0][j] });
 
+	svg2.selectAll(".cell").transition()
+	.duration(100)
+	   .style("fill", function(d, j) { return topo.slice(sl,sl+1)[0][j] });
+
 	sl++;
 	if (sl==shots.length){sl = 0;}
  

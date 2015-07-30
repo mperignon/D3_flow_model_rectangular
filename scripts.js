@@ -2,7 +2,7 @@ $.getScript('grid.js', function(){});
 $.getScript('veg.js', function(){});
 $.getScript('video_controls.js', function(){});
 
-var verbose = true;
+var verbose = false;
 var maxH, max_t;
 var t = 0;
 
@@ -26,7 +26,7 @@ var Ke = 12 * D * Math.sqrt(R * g * D);
 var nu = 0.000001;
 var vs = (R * g * D*D) / (18*nu - Math.pow((0.75*0.4 * g * R * D*D*D),2));
 var minh = tau_c * R * D / S;
-var dt = 1;
+var dt = 0.5;
 var tv = 0;
 var sl = 0;
 var vid_dt = 0;
@@ -45,7 +45,7 @@ var alpha = [0, 0.04, 0.1, 0.22, 0.4, 1];
 var browns = d3.scale.linear().domain([0,0.5])
 .range(["#fee391","#fec44f","#fe9929","#ec7014","#cc4c02","#993404","#662506"]);
 
-var sedColors = d3.scale.linear().domain([-0.005,0.005])
+var sedColors = d3.scale.quantize().domain([-0.005,0.005])
 .range(["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]);
 
 var blues = d3.scale.linear().domain([0,0.1])
@@ -75,6 +75,7 @@ function retrieve() {
 }
 
 var shots = [];
+var topo = [];
 
 var recolor = function() {
 
@@ -84,11 +85,23 @@ var recolor = function() {
 
 	svg.selectAll(".cell").each(function(d,i) {
 
-    if (d.veg == 0 & d.depth > 0.01) {colors.push(blues(d.depth));}
-    else if (d.veg == 0 & d.depth <= 0.01) {colors.push(browns(d.z));}
+    if (d.veg == 0 & d.depth > minh) {colors.push(blues(d.depth));}
+    else if (d.veg == 0 & d.depth <= minh) {colors.push(browns(d.z));}
     else {colors.push(greens(d.veg))}})
 	
+}
 
+var recolor_sed = function() {
+
+	if (verbose) { console.log('recolor_sed'); }
+	
+	colors_sed = [];
+
+	svg.selectAll(".cell").each(function(d,i) {
+
+    colors_sed.push(sedColors(d.z - initial_z[i]))
+    })
+	
 }
 
 var run_sim = function() {
@@ -100,17 +113,22 @@ var run_sim = function() {
 	})
 
 	shots.push(colors);
+	topo.push(colors_sed);
 	
 	document.getElementById("veg").innerHTML = "";
 	document.getElementById("running").innerHTML = " Running...";
+	var counter = 0;
 	
 	while (t < max_t) {
 		update();
-// 		update_sed();		
+		update_sed();		
         recolor();
-		if (t%5 ==0) {
+        recolor_sed();
+        counter++;
+		if (counter%5 ==0) {
 			shots.push(colors);
-			}
+			topo.push(colors_sed);
+		}
 
 
 	}
@@ -123,8 +141,5 @@ var run_sim = function() {
 	document.getElementById("playvideo").disabled = false;
 	document.getElementById("noplant").disabled = true;
 	
-	svg.selectAll("path").on("mousedown", function(d,i) {});
-	svg.selectAll("path").on("mouseover", function(d,i) {});
-	svg.selectAll("path").on("mouseout", function(d,i) {});
 	
 }

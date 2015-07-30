@@ -1,5 +1,5 @@
 var c2 =[];
-function previewLocation(c1, p) {
+function previewLocation(c1) {
 
   if (vegEdge) vegEdge.classed("vegEdge", false);
   
@@ -9,8 +9,12 @@ function previewLocation(c1, p) {
   c2.forEach(function(d) {
 	   if (d.isWall) { vegEdge = null; }
 	   else { vegEdge = d.elnt; }
-  if (vegEdge) vegEdge.classed("vegEdge", function(d) { return !d.isWall; });
+  if (vegEdge) {
+  vegEdge.classed("vegEdge", true) //function(d) { return !d.isWall; });
+  }
+  
   })
+
 }
 
 
@@ -26,23 +30,22 @@ var vegetate = function() {
 svg.selectAll(".field")
   .on("mouseover", function(c1) {
     d3.select(this).classed("vegCenter", true);
-    var p = d3.mouse(this);
-    previewLocation(c1, p);
+    previewLocation(c1);
     
-    d3.selectAll(".vegEdge")
+    svg.selectAll(".vegEdge")
     .attr('fill', function(d,i) {colors[i] = greens(d.veg+1); return colors[i]; });
     
-    d3.selectAll(".vegCenter")
+    svg.selectAll(".vegCenter")
     .attr('fill', function(d,i) {colors[i] = greens(d.veg+2); return colors[i]; });
     
   })
   
   .on("mouseout", function() {
-    d3.selectAll(".vegEdge").classed("vegEdge", false)
+    svg.selectAll(".vegEdge").classed("vegEdge", false)
     .attr('fill', function(d,i) {
     if (d.veg == 0) {colors[i] = browns(d.z);}
     else {colors[i] = greens(d.veg)} return colors[i]; })
-    d3.selectAll(".vegCenter").classed("vegCenter", false)
+   svg.selectAll(".vegCenter").classed("vegCenter", false)
     .attr('fill', function(d,i) {
     if (d.veg == 0) {colors[i] = browns(d.z);}
     else {colors[i] = greens(d.veg)} return colors[i]; })
@@ -50,9 +53,9 @@ svg.selectAll(".field")
   
   	.on("mousedown", function(c1) {
 
-    d3.selectAll(".vegCenter").classed("vegged", true).classed("vegCenter", false).each(function(d) { d.veg = d.veg + 2;});
-    d3.selectAll(".vegEdge").classed("vegged", true).classed("vegEdge", false).each(function(d) { d.veg++;});
-    d3.selectAll(".vegged")
+    svg.selectAll(".vegCenter").each(function(d) { return d.veg = d.veg + 2;}).classed("vegged", true).classed("vegCenter", false);
+    svg.selectAll(".vegEdge").each(function(d) { return d.veg = d.veg + 1;}).classed("vegged", true).classed("vegEdge", false);
+    svg.selectAll(".vegged")
     .attr('fill', function(d,i) { colors[i] = greens(d.veg); return colors[i]; });
   })
   
@@ -64,14 +67,12 @@ var resetVeg = function() {
 
 	if (verbose) { console.log('resetVeg'); }
 
-	d3.selectAll(".vegged").classed("vegged", false).each(function(d) { d.veg = 0;})
+	svg.selectAll(".vegged").classed("vegged", false).each(function(d) { d.veg = 0;})
 	.attr('fill', function(d,i) { colors[i]=browns(d.z); return colors[i]});
 
 	document.getElementById("plant").value = "Click to plant vegetation";
 	document.getElementById("plant").onclick = function() {vegetate();};
 	document.getElementById("noplant").disabled = true;
 	document.getElementById("plant").disabled = false;
-
-	svg.selectAll("path").on("click", function(d, i) {})
 
 }

@@ -6,6 +6,8 @@ var alpha = [0, 0.04, 0.4, 1];
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
 
+var initial_z = [];
+
 var k=0;
 var pts = d3.range(0, rows * cols).map(function (d,i) {
   var col = d % cols;
@@ -14,6 +16,8 @@ var pts = d3.range(0, rows * cols).map(function (d,i) {
   var x_ = col * sz + r;
   var y_ = row * sz + r;
   var z_ = (w - x_) * S + (y_ - rows/2 * sz)*(y_ - rows/2 * sz) / 20000 - w*S;
+  
+  initial_z.push(z_);
   
   return {
     r: row,
@@ -36,13 +40,16 @@ var pts = d3.range(0, rows * cols).map(function (d,i) {
 });
 
 var colors = pts.map( function (d) { return browns(d.z) });
+var colors_sed = pts.map( function (d) { return sedColors(0) });
 
 
 
 var svg = d3.select("body").append("svg")
     .attr("width", w)
     .attr("height", h);
-
+var svg2 = d3.select("body").append("svg")
+    .attr("width", w)
+    .attr("height", h);
 
 var rectx = function(d) { return d.x - r; };
 var recty = function(d) { return d.y - r; };
@@ -77,13 +84,23 @@ var cell = svg.selectAll(".cell")
   .each(function(d) {
     d.elnt = d3.select(this);
   });
+  
+  
+var cell2 = svg2.selectAll(".cell")
+  .data(pts)
+  .enter().append("rect")
+  .attr("class", function(d) { 
+  return "cell " + ((d.isWall = d.c == 0 || d.c == cols - 1 || d.r == 0 || d.r == rows - 1) ? "wall" : "field");
+  })
+  .attr("x", rectx)
+  .attr("y", recty)
+  .attr("width", sz)
+  .attr("height", sz)
+  .attr("fill", function(d,i) { return colors_sed[i]; })
+  .attr("stroke", function(d,i) { return colors_sed[i]; });
 
 
-var lffu1 = [];
-var lffu2 = [];
-var lffv1 = [];
-var lffv3 = [];
-var huv = [];
+
 
 
 var geometry = function() {
@@ -91,6 +108,12 @@ var geometry = function() {
 	if (verbose) {
 		console.log('geometry')
 	}
+
+var lffu1 = [];
+var lffu2 = [];
+var lffv1 = [];
+var lffv3 = [];
+var huv = [];
 
 var i, j, k, ui, vi, hi, uj, vj, hj, uk, vk, hk, ghh, Ci, Cj, Ck;
 
@@ -192,8 +215,8 @@ svg.selectAll(".field").each( function(d) {
 	var dh = - (dt/dx) * fluxxh - (dt/dy) * fluxyh;
 	var duh = - (dt/dx) * fluxxu - (dt/dy) * fluxyu;
 	var dvh = - (dt/dx) * fluxxv - (dt/dy) * fluxyv;
-	var dChx = - (dt/dx) * fluxxCx - (dt/dy) * fluxyCx;
-	var dChy = - (dt/dx) * fluxxCy - (dt/dy) * fluxyCy;
+	var dChx = (dt/dx) * fluxxCx + (dt/dy) * fluxyCx;
+	var dChy = (dt/dx) * fluxxCy + (dt/dy) * fluxyCy;
 	
 	//////////////////////// TO THE LEFT AND UP //////////////////////
 
@@ -252,6 +275,29 @@ svg.selectAll(".field").each( function(d) {
 	fluxyCy = fluxyv * 0.5 * (Ci + Ck);
 	
 	
+// 	var dhdt = (left.hu - d.hu)/dx + (d.hu - right.hu)/dx + (up.hv - d.hv)/dy + (d.hv - down.hv)/dy;
+// 	
+// 	if (dhdt>0) {
+// 	console.log(dhdt)
+// 	}
+// 	
+// 	var lambdau=function(d) {
+// 	return (d.uh/d.depth)*(d.uh/d.depth)*(d.depth) + g*d.depth*d.depth/2;
+// 	}
+// 	
+// 	var lambdav=function(d) {
+// 	return (d.vh/d.depth)*(d.vh/d.depth)*(d.depth) + g*d.depth*d.depth/2;
+// 	}
+// 	
+// 	var duhdt = (lambdau(left) - lambdau(d))/dx + (lambdau(d) - lambdau(right))/dx + (lambdav(up) - lambdav(d))/dy + (lambdav(d) - lambdav(down))/dy;
+// 	
+	
+	
+	
+	
+	
+	////////////////////////////////////////
+	
 	d.dh = dh + (dt/dx) * fluxxh + (dt/dy) * fluxyh;
 	d.duh = duh + (dt/dx) * fluxxu + (dt/dy) * fluxyu;
 	d.dvh = dvh + (dt/dx) * fluxxv + (dt/dy) * fluxyv;
@@ -300,11 +346,11 @@ var update = function() {
 		
 	
 		d.depth = d.depth + d.dh;
-		d.hu = d3.max([d.hu + d.duh,0]);
-		d.hv = d3.max([d.hv + d.dvh,0]);
+		d.hu = d.hu + d.duh;
+		d.hv = d.hv + d.dvh;
 		
 		if (d.depth <= 0) {
-			d.depth = 0.0001;
+			d.depth = 0.001;
 			d.hu = 0;
 			d.hv = 0;		
 		}
@@ -319,10 +365,10 @@ svg.selectAll(".wall").each( function(d) {
 	d.hu = 0;
 	
 	if (d.c == 0) {
-		var stage = d3.max([d.z+0.0001, maxH]);
-		d.depth = d3.max([stage - d.z, rightCell(d).depth + 0.1]);
-		d.hu = rightCell(d).hu;
-		d.hv = rightCell(d).hv;
+		var stage = d3.max([d.z, maxH]);
+		d.depth = d3.max([stage - d.z, rightCell(d).depth]);
+		d.hu = d.depth*0.5;
+		d.hv = 0;
 	}
 
 
@@ -331,110 +377,70 @@ svg.selectAll(".wall").each( function(d) {
 
 	t = t + dt;
 }
-// 
-// 
-// 
-// 
-// var update_sed = function () {
-// 
-// var Edot = [];
-// var Ddot = [];
-// var tau_s, edot, ddot;
-// var tau_b, diff;
-// 
-// 
-// 	for (var i=0; i<edge_top.length; i++) {
-// 		var i_ = edge_top[i];
-// 		pts[i_].dChx = pts[i_+MapColumns].dChx;
-// 		pts[i_].dChy = pts[i_+MapColumns].dChy;
-// 		if (pts[i_].depth < minh) {
-//             pts[i_].Ch = 0;
-//             pts[i_].dChy = 0;
-//             pts[i_].dChx = 0;
-//         }
-// 	}
-// 		for (var i=0; i<edge_bottom.length; i++) {
-// 		var i_ = edge_bottom[i];
-// 		pts[i_].dChx = pts[i_-MapColumns].dChx;
-// 		pts[i_].dChy = pts[i_-MapColumns].dChy;
-// 		if (pts[i_].depth < minh) {
-//             pts[i_].Ch = 0;
-//             pts[i_].dChy = 0;
-//             pts[i_].dChx = 0;
-//         }
-// 	}
-// 		for (var i=0; i<edge_right.length; i++) {
-// 		var i_ = edge_right[i];
-// 		pts[i_].dChx = pts[i_-1].dChx;
-// 		pts[i_].dChy = pts[i_-1].dChy;
-// 		if (pts[i_].depth < minh) {
-//             pts[i_].Ch = 0;
-//             pts[i_].dChy = 0;
-//             pts[i_].dChx = 0;
-//         }
-// 		
-// 	}
-// 	for (var i=0; i<edge_left.length; i++) {
-// 		var i_ = edge_left[i];
-// // 		pts[i_].Ch = Co*pts[i_].depth;
-// 		pts[i_].dChy = 0;
-// 		pts[i_].dChx = pts[i_].hu*Co;
-// 
-// //         pts[i_].dChx = 0.5* (pts[i_].duh + pts[i_+1].duh) *  0.5 * ((pts[i_].Ch/pts[i_].depth) + (pts[i_+1].Ch/pts[i_+1].depth))
-// //         
-//         if (pts[i_].depth < minh) {
-//             pts[i_].Ch = 0;
-//             pts[i_].dChy = 0;
-//             pts[i_].dChx = 0;
-//         }
-//         
-//     }
-// 
-// 
-// for (var i=0; i<pts.length; i++) {
-// 
-// 	// do dCh/dt here, set new C
-// 	// then do dz/dt here
-// 
-// 	// erosion and deposition
-// 	var h = pts[i].depth;
-// 	
-// 	if (h>minh) {
-// 	
-// 	var C = pts[i].Ch / h;
-// 
-// 	tau_b = rho * g * h * S;
-// 	tau_s = tau_b / ((rho_s - rho) * g * D);
-// 	
-// 	edot = d3.max([Ke * (tau_s - tau_c),0]);
-// 	ddot = C*vs;
-// 	
-// 	diff = ddot - edot;
-// 	
-// 	pts[i].Ch = d3.max([pts[i].Ch + pts[i].dChx + pts[i].dChy - diff*dt,0]);
-// 	
-// 	// dz/dt
-// 	var dz = diff*dt/(1-porosity);
-// 	
-// 	pts[i].z = pts[i].z + dz;
-// 	pts[i].depth = pts[i].depth + dz;
-// 	
-// 
-// 	} else {
-// 	
-//         pts[i].Ch = 0;
-//         pts[i].dChy = 0;
-//         pts[i].dChx = 0;
-//     }
-// 	
-// 
-// }
-// 
-// 	
-// for (var i=0; i<pts.length; i++) {
-// elev.push(sedColors(pts[i].z - initial_z[i]));
-// }
-// 
-// 
-// }
+
+
+
+vs = (R * g * D*D) / (18*nu - Math.pow((0.75*0.4 * g * R * D*D*D),2));
+var update_sed = function () {
+
+var Edot = [];
+var Ddot = [];
+var tau_s, edot, ddot;
+var tau_b, diff;
+
+
+svg.selectAll(".wall").each( function(d) {
+
+	d.dChx = 0;
+	d.dChy = 0;
+	d.Ch = 0;
+	
+	if (d.c == 0) {
+		d.Ch = d.depth*Co;
+		d.dChy = 0;
+		d.dChx = 0;
+	}
+
+})
+
+
+svg.selectAll(".cell").each( function(d) {
+
+
+	// erosion and deposition
+	var h = d.depth;
+	
+	if (h>minh) {
+	
+	var C = d.Ch / h;
+
+	var tau_b = rho * g * h * S;
+	var tau_s = tau_b / ((rho_s - rho) * g * D);
+	
+	var edot = d3.max([Ke * (tau_s - tau_c),0]);
+	var ddot = C*vs;
+	
+	var diff = ddot - edot;
+	
+	d.Ch = d3.max([d.Ch + d.dChx + d.dChy - diff*dt,0]);
+	
+	// dz/dt
+	var dz = diff*dt/(1-porosity);
+	
+	d.z = d.z + dz;
+	d.depth = d.depth + dz;
+	
+
+	} else {
+	
+        d.Ch = 0;
+        d.dChy = 0;
+        d.dChx = 0;
+    }
+	
+
+})
+
+
+}
 
