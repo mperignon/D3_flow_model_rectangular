@@ -15,7 +15,7 @@ var pts = d3.range(0, rows * cols).map(function (d,i) {
   
   var x_ = col * sz + r;
   var y_ = row * sz + r;
-  var z_ = (w - x_) * S + (y_ - rows/2 * sz)*(y_ - rows/2 * sz) / 20000 - w*S;
+  var z_ = (w - x_) * S + (y_ - rows/2 * sz)*(y_ - rows/2 * sz) / 25000 - w*S;
   
   initial_z.push(z_);
   
@@ -40,8 +40,7 @@ var pts = d3.range(0, rows * cols).map(function (d,i) {
 });
 
 var colors = pts.map( function (d) { return browns(d.z) });
-var colors_sed = pts.map( function (d) { return sedColors(0) });
-
+var colors_sed = pts.map( function (d) { return 0 });
 
 var midpt = pts.length/2 + cols/2;
 
@@ -97,8 +96,8 @@ var cell2 = svg2.selectAll(".cell")
   .attr("y", recty)
   .attr("width", sz)
   .attr("height", sz)
-  .attr("fill", function(d,i) { return colors_sed[i]; })
-  .attr("stroke", function(d,i) { return colors_sed[i]; });
+  .attr("fill", function(d,i) { return sedColors(colors_sed[i]); })
+  .attr("stroke", function(d,i) { return sedColors(colors_sed[i]); });
 
 
 
@@ -109,24 +108,7 @@ var geometry = function() {
 	if (verbose) {
 		console.log('geometry')
 	}
-svg.selectAll(".wall").each( function(d) {
 
-	d.depth = 0.001;
-	d.hv = 0;
-	d.hu = 0;
-	
-	if (d.c == 0) {
-		var stage = d3.max([d.z, pts[midpt].z+maxH]);
-		d.depth = stage - d.z+0.001;
-		d.hu = 1/n * Math.pow(d.depth,1.66) * Math.pow(Math.abs(d.z - rightCell(d).z)/dx,0.5);
-		d.hv = 0;
-	}
-
-
-
-
-
-})
 var lffu1 = [];
 var lffu2 = [];
 var lffv1 = [];
@@ -142,7 +124,7 @@ svg.selectAll(".cell").each( function(d) {
 	hi = d.depth;
 	
 	huv.push(ui*vi*hi);
-	ghh = 0.5 * g*hi*hi;
+	ghh = 0.5 * g * hi*hi;
 	
 	lffu1.push(hi*ui);
 	lffu2.push(hi*ui*ui + ghh);
@@ -160,6 +142,8 @@ var lambdau, lambdav, fluxxh, fluxxu, fluxxv, fluxyh, fluxyu, fluxyv, fluxxCx, f
 
 
 svg.selectAll(".field").each( function(d) {
+
+
 	
 	//////////////////// TO THE RIGHT AND DOWN /////////////////////////////
 
@@ -204,7 +188,7 @@ svg.selectAll(".field").each( function(d) {
 		Ck = down.Ch / down.depth;
 	}
 	
-	if (true) {
+
 	
 	i = d.k;
 	j = right.k;
@@ -216,35 +200,23 @@ svg.selectAll(".field").each( function(d) {
 	// to the right
 	fluxxh = 0.5 * (lffu1[i] + lffu1[j]) - 0.5 * lambdau * (hj - hi);
 	fluxxu = 0.5 * (lffu2[i] + lffu2[j]) - 0.5 * lambdau * (uj*hj - ui*hi);
-	fluxxv = 0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vj*hj - vi*hi);
+	fluxxv = 0;//0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vj*hj - vi*hi);
 	
-	fluxxCx = fluxxu * 0.5 * (Ci + Cj);
-	fluxxCy = fluxxv * 0.5 * (Ci + Cj);
+	fluxxCx = 0.5 * (hi + hj) * 0.5 * (ui + uj) * 0.5 * (Ci + Cj);
+	fluxxCy = 0.5 * (hi + hj) * 0.5 * (vi + vj) * 0.5 * (Ci + Cj);
 	
 	// down
 	fluxyh = 0.5 * (lffv1[i] + lffv1[k]) - 0.5 * lambdav * (hk - hi);
-	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (uk*hk - ui*hi);
+	fluxyu = 0;//0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (uk*hk - ui*hi);
 	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vk*hk - vi*hi);
 	
-	fluxyCx = fluxyu * 0.5 * (Ci + Ck);
-	fluxyCy = fluxyv * 0.5 * (Ci + Ck);
+	fluxyCx = 0.5 * (hi + hk) * 0.5 * (ui + uk) * 0.5 * (Ci + Ck);
+	fluxyCy = 0.5 * (hi + hk) * 0.5 * (vi + vk) * 0.5 * (Ci + Ck);
 	
-	} else {
 	
-	fluxxh = 0;
-	fluxyh = 0;
-	fluxxu = 0;
-	fluxyu = 0;
-	fluxxv = 0;
-	fluxyv = 0;
-	fluxxCx = 0;
-	fluxyCy = 0;
-	
-	}
-	
-	var dh = - (dt/dx) * fluxxh - (dt/dy) * fluxyh;
-	var duh = - (dt/dx) * fluxxu - (dt/dy) * fluxyu;
-	var dvh = - (dt/dx) * fluxxv - (dt/dy) * fluxyv;
+	var dh = (dt/dx) * fluxxh + (dt/dy) * fluxyh;
+	var duh =  (dt/dx) * fluxxu + (dt/dy) * fluxyu;
+	var dvh =  (dt/dx) * fluxxv + (dt/dy) * fluxyv;
 	var dChx = (dt/dx) * fluxxCx + (dt/dy) * fluxyCx;
 	var dChy = (dt/dx) * fluxxCy + (dt/dy) * fluxyCy;
 	
@@ -278,7 +250,7 @@ svg.selectAll(".field").each( function(d) {
 		Ck = up.Ch / up.depth;
 	}			
 
-	if (true) {
+	
 	j = left.k;
 	k = up.k;
 							
@@ -291,60 +263,32 @@ svg.selectAll(".field").each( function(d) {
 	// to the left
 	fluxxh = 0.5 * (lffu1[i] + lffu1[j]) - 0.5 * lambdau * (hi - hj);
 	fluxxu = 0.5 * (lffu2[i] + lffu2[j]) - 0.5 * lambdau * (ui*hi - uj*hj);
-	fluxxv = 0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vi*hi - vj*hj);
+	fluxxv = 0;//0.5 * (huv[i] + huv[j]) - 0.5 * lambdau * (vi*hi - vj*hj);
 	
-	fluxxCx = fluxxu * 0.5 * (Ci + Cj);
-	fluxxCy = fluxxv * 0.5 * (Ci + Cj);
+	fluxxCx = 0.5 * (hi + hj) * 0.5 * (ui + uj) * 0.5 * (Ci + Cj);
+	fluxxCy = 0.5 * (hi + hj) * 0.5 * (vi + vj) * 0.5 * (Ci + Cj);
 	
 	// up
 	fluxyh = 0.5 * (lffv1[i] + lffv1[k]) - 0.5 * lambdav * (hi - hk);
-	fluxyu = 0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (ui*hi - uk*hk);
+	fluxyu = 0;//0.5 * (huv[i] + huv[k]) - 0.5 * lambdav * (ui*hi - uk*hk);
 	fluxyv = 0.5 * (lffv3[i] + lffv3[k]) - 0.5 * lambdav * (vi*hi - vk*hk);
 	
-	fluxyCx = fluxyu * 0.5 * (Ci + Ck);
-	fluxyCy = fluxyv * 0.5 * (Ci + Ck);
+	fluxyCx = 0.5 * (hi + hk) * 0.5 * (ui + uk) * 0.5 * (Ci + Ck);
+	fluxyCy = 0.5 * (hi + hk) * 0.5 * (vi + vk) * 0.5 * (Ci + Ck);
 	
-	
-// 	var dhdt = (left.hu - d.hu)/dx + (d.hu - right.hu)/dx + (up.hv - d.hv)/dy + (d.hv - down.hv)/dy;
-// 	
-// 	if (dhdt>0) {
-// 	console.log(dhdt)
-// 	}
-// 	
-// 	var lambdau=function(d) {
-// 	return (d.uh/d.depth)*(d.uh/d.depth)*(d.depth) + g*d.depth*d.depth/2;
-// 	}
-// 	
-// 	var lambdav=function(d) {
-// 	return (d.vh/d.depth)*(d.vh/d.depth)*(d.depth) + g*d.depth*d.depth/2;
-// 	}
-// 	
-// 	var duhdt = (lambdau(left) - lambdau(d))/dx + (lambdau(d) - lambdau(right))/dx + (lambdav(up) - lambdav(d))/dy + (lambdav(d) - lambdav(down))/dy;
-// 	
-	
-	
-	} else {
-	
-	fluxxh = 0;
-	fluxyh = 0;
-	fluxxu = 0;
-	fluxyu = 0;
-	fluxxv = 0;
-	fluxyv = 0;
-	fluxxCx = 0;
-	fluxyCy = 0;
-	
-	}
 	
 	
 	////////////////////////////////////////
 	
-	d.dh = dh + (dt/dx) * fluxxh + (dt/dy) * fluxyh;
-	d.duh = duh + (dt/dx) * fluxxu + (dt/dy) * fluxyu - Math.sign(d.hu)*g*hi*S;
-	d.dvh = dvh + (dt/dx) * fluxxv + (dt/dy) * fluxyv - Math.sign(d.hv)*g*hi*S;
+	var slpx = (((left.z+left.depth) - (d.z+d.depth))/dx+((d.z+d.depth) - (right.z+right.depth))/dx)/2;
+	var slpy = (((up.z+up.depth) - (d.z+d.depth))/dy+((d.z+d.depth) - (down.z+down.depth))/dy)/2;
 	
-	d.dChx = 0;//dChx + (dt/dx) * fluxxCx + (dt/dy) * fluxyCx;
-	d.dChy = 0;//dChy + (dt/dx) * fluxxCy + (dt/dy) * fluxyCy;
+	d.dh = -dh + (dt/dx) * fluxxh + (dt/dy) * fluxyh;
+	d.duh = -duh + (dt/dx) * fluxxu + (dt/dy) * fluxyu;// - g*slpx;
+	d.dvh = -dvh + (dt/dx) * fluxxv + (dt/dy) * fluxyv;// - g*slpy;
+	
+	d.dChx = 0//dChx + (dt/dx) * fluxxCx + (dt/dy) * fluxyCx;
+	d.dChy = 0//dChy + (dt/dx) * fluxxCy + (dt/dy) * fluxyCy;
 	
 	if (d.depth < minh) {
 
@@ -360,7 +304,8 @@ svg.selectAll(".field").each( function(d) {
 ///////////////////////////////////////////////////////////////////////////
 
 
-
+Ke = 12 * D * Math.sqrt(R * g * D);
+vs = (R * g * D*D) / (18*nu - Math.pow((0.75*0.4 * g * R * D*D*D),2));
 var update = function() {
 
 	geometry();
@@ -369,24 +314,7 @@ var update = function() {
 		console.log('update')
 	}
 	
-svg.selectAll(".wall").each( function(d) {
-
-	d.depth = 0.001;
-	d.hv = 0;
-	d.hu = 0;
 	
-	if (d.c == 0) {
-		var stage = d3.max([d.z, pts[midpt].z+maxH]);
-		d.depth = stage - d.z+0.001;
-		d.hu = 1/n * Math.pow(d.depth,1.66) * Math.pow(Math.abs(d.z - rightCell(d).z)/dx,0.5);
-		d.hv = 0;
-	}
-
-
-
-
-
-})	
 	svg.selectAll(".field").each( function(d) {
 	
 		if (d.veg>0.1 && d.depth>0.001) {
@@ -408,6 +336,7 @@ svg.selectAll(".wall").each( function(d) {
 		d.hv = d.hv + d.dvh;
 		
 		if (d.depth <= 0) {
+		
 			d.depth = 0.001;
 			d.hu = 0;
 			d.hv = 0;		
@@ -416,18 +345,29 @@ svg.selectAll(".wall").each( function(d) {
 
 	})
 	
+svg.selectAll(".wall").each( function(d) {
+
+	d.depth = 0.001;
+	d.hv = 0;
+	d.hu = 0;
+	
+	if (d.c == 0) {
+		var stage = d3.max([d.z, pts[midpt].z+maxH]);
+		d.depth = stage - d.z+0.001;
+		d.hu = 1/n * Math.pow(d.depth,1.66) * Math.pow(Math.abs(d.z - rightCell(d).z)/dx,0.5);
+		d.hv = 0;
+	}
+
+
+})
 
 
 	t = t + dt;
 }
 
 
-
-vs = (R * g * D*D) / (18*nu - Math.pow((0.75*0.4 * g * R * D*D*D),2));
 var update_sed = function () {
 
-var Edot = [];
-var Ddot = [];
 var tau_s, edot, ddot;
 var tau_b, diff;
 
@@ -446,8 +386,7 @@ svg.selectAll(".wall").each( function(d) {
 
 })
 
-
-svg.selectAll(".cell").each( function(d) {
+svg.selectAll(".field").each( function(d) {
 
 
 	// erosion and deposition
@@ -456,14 +395,24 @@ svg.selectAll(".cell").each( function(d) {
 	if (h>minh) {
 	
 	var C = d.Ch / h;
+	
+	var slopex = Math.abs(d.z - rightCell(d).z)/dx;
+	var slopey = slopex;
+	// if (d.z>bottomCell(d).z) {
+// 		slopey = Math.abs(d.z - bottomCell(d).z)/dy;
+// 	} else {
+// 		slopey = Math.abs(d.z - topCell(d).z)/dy;
+// 	}
+	
+	var slope = Math.sqrt(Math.pow(slopex,2) + Math.pow(slopey,2));
 
-	var tau_b = rho * g * h * S;
+	var tau_b = rho * g * h * slope;
 	var tau_s = tau_b / ((rho_s - rho) * g * D);
 	
-	var edot = d3.max([Ke * (tau_s - tau_c),0]);
-	var ddot = C*vs;
+	var edot = d3.min([d3.max([Ke * (tau_s - tau_c),0]),0.0005*dt]);
+	var ddot = d3.min([C*vs,0.0005*dt]);
 	
-	var diff = 0;//ddot - edot;
+	var diff = ddot - edot;
 	
 	d.Ch = d3.max([d.Ch + d.dChx + d.dChy - diff*dt,0]);
 	
@@ -471,7 +420,9 @@ svg.selectAll(".cell").each( function(d) {
 	var dz = diff*dt/(1-porosity);
 	
 	d.z = d.z + dz;
-	d.depth = d.depth + dz;
+	//d.depth = d.depth - dz;
+// 	console.log(diff, dz)
+	//console.log(edot, ddot, diff, dz)
 	
 
 	} else {

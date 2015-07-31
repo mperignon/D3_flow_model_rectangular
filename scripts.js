@@ -22,17 +22,18 @@ var D = 0.0005;
 var tau_c = 0.047;
 var u_s = Math.sqrt(0.05/8);
 var R = (rho_s - rho) / rho;
-var Ke = 12 * D * Math.sqrt(R * g * D);
+var Ke;
 var nu = 0.000001;
 var vs = (R * g * D*D) / (18*nu - Math.pow((0.75*0.4 * g * R * D*D*D),2));
 var minh = tau_c * R * D / S;
-var dt = 0.5;
+var dt = 0.25;
 var tv = 0;
 var sl = 0;
 var vid_dt = 0;
+var n = 0.03;
     
 var g = 9.81;
-var Co = 0.01; // concentration of incoming flow, in decimal
+var Co = 0.005; // concentration of incoming flow, in decimal
 
 var Cd = 1.2;
 var porosity = 0.3;
@@ -45,8 +46,8 @@ var alpha = [0, 0.04, 0.1, 0.22, 0.4, 1];
 var browns = d3.scale.linear().domain([0,0.5])
 .range(["#fee391","#fec44f","#fe9929","#ec7014","#cc4c02","#993404","#662506"]);
 
-var sedColors = d3.scale.quantize().domain([-0.005,0.005])
-.range(["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"]);
+var sedColors = d3.scale.quantize().domain([-0.01,0.01])
+.range(["#9e0142","#d53e4f","#f46d43","#fdae61","#fee08b","#ffffbf","#e6f598","#abdda4","#66c2a5","#3288bd","#5e4fa2"]);
 
 var blues = d3.scale.linear().domain([0,0.1])
 .range(["#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#08519c"]);
@@ -85,8 +86,8 @@ var recolor = function() {
 
 	svg.selectAll(".cell").each(function(d,i) {
 
-    if (d.veg == 0 & d.depth > minh) {colors.push(blues(d.depth));}
-    else if (d.veg == 0 & d.depth <= minh) {colors.push(browns(d.z));}
+    if (d.veg == 0 & d.depth > minh) {colors.push(blues(d.depth+d.z));}
+    else if (d.veg == 0 & d.depth <= minh) {colors.push(browns(d.depth+d.z));}
     else {colors.push(greens(d.veg))}})
 	
 }
@@ -99,7 +100,7 @@ var recolor_sed = function() {
 
 	svg.selectAll(".cell").each(function(d,i) {
 
-    colors_sed.push(sedColors(d.z - initial_z[i]))
+    colors_sed.push(d.z - initial_z[i])
     })
 	
 }
